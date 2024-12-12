@@ -8,7 +8,7 @@ import {
 
 const router = express.Router();
 
-router.post('/', upload.single('questionImage'), createQuestion);
+router.route('/').post( createQuestion);
 
 router.patch('/:questionId', upload.single('questionImage'), updateQuestion);
 
