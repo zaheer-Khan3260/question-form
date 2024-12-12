@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
 import Input from "../helper/Input";
 import CategoryContainer from "../helper/CategoryContainer";
-import { Save, Pencil, Trash2, GripVertical, Image } from "lucide-react"; // Import icons from lucid react
+import { Save, Pencil, Trash2, GripVertical, Image } from "lucide-react";
+import api from "../../api/api.js"
+import axios from "axios";
 
-function Categorize({formAccessKey}) {
+function Categorize({ formAccessKey, onFormSubmit }) {
   const [category, setCategory] = useState([]);
   const [newCategory, setNewCategory] = useState("");
   const [item, setItem] = useState([]);
@@ -36,14 +38,11 @@ function Categorize({formAccessKey}) {
 
   const handlePointsChange = (e) => {
     setPoints(e.target.value);
-  }; 
-
-
+  };
 
   const handleCategoryChange = (e) => {
     setNewCategory(e.target.value);
   };
-
 
   const handleDeleteCategory = (index) => {
     setCategory(category.filter((_, i) => i !== index));
@@ -68,9 +67,9 @@ function Categorize({formAccessKey}) {
   };
 
   const handleItemCategoryChange = (e, item) => {
-    setItemCategory(prevState => ({
+    setItemCategory((prevState) => ({
       ...prevState,
-      [item]: e.target.value
+      [item]: e.target.value,
     }));
   };
 
@@ -78,37 +77,21 @@ function Categorize({formAccessKey}) {
     setNewItem(e.target.value);
   };
 
-  const handleSubmit = () => {
-    const formData = new FormData();
-    formData.append("questionTitle", questionTitle);
-    formData.append("points", points);
-    formData.append("questionImage", questionImage);
-    formData.append("forAccessKey", formAccessKey);
-    category.forEach((cat, index) => {
-      formData.append(`category[${index}]`, cat);
-    });
-    item.forEach((it, index) => {
-      formData.append(`item[${index}]`, it);
-      formData.append(`itemCategory[${index}]`, itemCategory[it]);
-    });
-    console.log(formData);
-  };
-
   const handleCategoryDragStart = (e, index) => {
     e.dataTransfer.setData("text/plain", index);
   };
-
+  
   const handleCategoryDragOver = (e) => {
     e.preventDefault();
   };
-
+  
   const handleCategoryDrop = (e) => {
     e.preventDefault();
     const draggedIndex = parseInt(e.dataTransfer.getData("text/plain"), 10);
     const dropTargetIndex = category.findIndex(
       (_, index) => e.target.closest(`[data-index="${index}"]`)
     );
-
+  
     if (draggedIndex !== dropTargetIndex && dropTargetIndex !== -1) {
       const newCategories = [...category];
       const [reorderedItem] = newCategories.splice(draggedIndex, 1);
@@ -116,22 +99,22 @@ function Categorize({formAccessKey}) {
       setCategory(newCategories);
     }
   };
-
+  
   const handleItemDragStart = (e, index) => {
     e.dataTransfer.setData("text/plain", index);
   };
-
+  
   const handleItemDragOver = (e) => {
     e.preventDefault();
   };
-
+  
   const handleItemDrop = (e) => {
     e.preventDefault();
     const draggedIndex = parseInt(e.dataTransfer.getData("text/plain"), 10);
     const dropTargetIndex = item.findIndex(
       (_, index) => e.target.closest(`[data-index="${index}"]`)
     );
-
+  
     if (draggedIndex !== dropTargetIndex && dropTargetIndex !== -1) {
       const newItems = [...item];
       const [reorderedItem] = newItems.splice(draggedIndex, 1);
@@ -140,7 +123,41 @@ function Categorize({formAccessKey}) {
     }
   };
 
-  return(
+  const handleSubmit = async () => {
+    const content = {
+      categories: category,
+      items: item,
+  };
+
+    try {
+      const response = await api.post("/question/", {
+        questionTitle,
+        points,
+        formAccessKey,
+        type: "Categorize",
+        content
+      });
+
+      if (response.data) {
+        console.log("Question created:", response.data);
+        const data = response.data.data
+        onFormSubmit(data._id);
+        setCategory([]);
+        setItem([]);
+      }
+    } catch (error) {
+      console.error("Error creating question:", error);
+    }
+  };
+
+  const handleFileChange = (e, setter) => {
+    const file = e.target.files[0];
+    if (file) {
+      setter(file);
+    }
+  };
+
+  return (
     <div
       ref={containerRef}
       onClick={() => setIsFocused(true)}
@@ -178,21 +195,12 @@ function Categorize({formAccessKey}) {
           <input
             type="file"
             accept="image/*"
-            onChange={(e) => {
-              const file = e.target.files[0];
-              if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => setQuestionImage(e.target.result);
-                reader.readAsDataURL(file);
-              }
-            }}
+            onChange={(e) => handleFileChange(e, setQuestionImage)}
             className="text-primary-color mt-12 w-8 absolute right-[18rem] opacity-0 cursor-pointer"
           />
         </div>
         <div>
-          <div className="mb-4 text-primary-color text-xl ml-8">
-            Points
-          </div>
+          <div className="mb-4 text-primary-color text-xl ml-8">Points</div>
           <Input
             type="number"
             value={points}
@@ -203,15 +211,15 @@ function Categorize({formAccessKey}) {
         </div>
       </div>
       <div className="my-8 mb-4 text-primary-color text-xl ml-8">Category</div>
-      <div 
-        className="w-[2/3] space-y-2" 
-        onDrop={handleCategoryDrop} 
-        onDragOver={handleCategoryDragOver}
+      <div
+        className="w-[2/3] space-y-2"
+        onDrop={(e) => handleCategoryDrop(e)}
+        onDragOver={(e) => handleCategoryDragOver(e)}
       >
         {category.map((cat, index) => (
-          <div 
-            key={index} 
-            draggable 
+          <div
+            key={index}
+            draggable
             data-index={index}
             onDragStart={(e) => handleCategoryDragStart(e, index)}
           >
@@ -233,17 +241,17 @@ function Categorize({formAccessKey}) {
 
       <div className="my-8 mb-4 text-primary-color text-xl flex justify-between w-1/3 ml-8">
         <div>Item</div>
-        {item.length > 0 && (<div className="mr-8">Belong To</div>)}
+        {item.length > 0 && <div className="mr-8">Belong To</div>}
       </div>
 
-      <div 
+      <div
         className="w-1/3"
-        onDrop={handleItemDrop}
-        onDragOver={handleItemDragOver}
+        onDrop={(e) => handleItemDrop(e)}
+        onDragOver={(e) => handleItemDragOver(e)}
       >
         {item.map((it, index) => (
-          <div 
-            className="flex w-full justify-between mb-2" 
+          <div
+            className="flex w-full justify-between mb-2"
             key={index}
             draggable
             data-index={index}
@@ -278,28 +286,42 @@ function Categorize({formAccessKey}) {
       </div>
 
       <div className="mt-4 space-y-6 absolute right-0 opacity-0 group-hover:right-[-6rem] p-2 group-hover:opacity-100 transition-all duration-300">
-    <div
-      onClick={handleSubmit}
-      className="text-primary-color duration-300 transition-all hover:scale-110 cursor-pointer flex space-x-2"
-    >
-      <Save className="peer" />
-      <p className="text-primary-color opacity-0 peer-hover:opacity-100">
-        save
-      </p>
+        <div
+          onClick={handleSubmit}
+          className="text-primary-color duration-300 transition-all hover:scale-110 cursor-pointer flex space-x-2"
+        >
+          <Save className="peer" />
+          <p className="text-primary-color opacity-0 peer-hover:opacity-100">save</p>
+        </div>
+        <div
+          onClick={handleSubmit}
+          className="text-primary-color duration-300 transition-all hover:scale-110 cursor-pointer flex space-x-2"
+        >
+          <Pencil className="peer" />
+          <p className="text-primary-color opacity-0 peer-hover:opacity-100">edit</p>
+        </div>
+      </div>
     </div>
-    <div
-      onClick={handleSubmit}
-      className="text-primary-color duration-300 transition-all hover:scale-110 cursor-pointer flex space-x-2"
-    >
-      <Pencil className="peer" />
-      <p className="text-primary-color opacity-0 peer-hover:opacity-100">
-        edit
-      </p>
-    </div>
-  </div>
-
-    </div>
-  )
+  );
 }
 
 export default Categorize;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

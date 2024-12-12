@@ -2,8 +2,9 @@ import React, { useState, useRef, useEffect } from "react";
 import Input from "../helper/Input";
 import { Trash2, GripVertical, Image, CirclePlus, Save, Pencil } from "lucide-react";
 import CategoryContainer from "../helper/CategoryContainer";
+import api from "../../api/api.js";
 
-function Comprehension({formAccessKey}) {
+function Comprehension({formAccessKey, onFormSubmit}) {
   // State variables
   const [isFocused, setIsFocused] = useState(false);
   const [points, setPoints] = useState("0");
@@ -120,20 +121,31 @@ function Comprehension({formAccessKey}) {
   };
 
   // Submit form data
-  const handleSubmit = () => {
-    const formData = new FormData();
-    formData.append("questionTitle", passageText);
-    formData.append("points", points);
-    formData.append("questionImage", questionImage);
-    formData.append("forAccessKey", formAccessKey);
-    subQuestions.forEach((subQuestion, index) => {
-      formData.append(`subQuestion[${index}][question]`, subQuestion.question);
-      subQuestion.options.forEach((option, optionIndex) => {
-        formData.append(`subQuestion[${index}][options][${optionIndex}][text]`, option.text);
+  const handleSubmit = async () => {
+    const content = {
+      passage: passageText,
+      questions: subQuestions,
+  };
+
+    try {
+      const response = await api.post("/question/", {
+        points,
+        formAccessKey,
+        type: "Comprehension",
+        content
       });
-      formData.append(`subQuestion[${index}][correctAnswer]`, subQuestion.correctAnswer);
-    });
-    console.log(formData);
+
+      if (response.data) {
+        console.log("Question created:", response.data);
+        const data = response.data.data
+        onFormSubmit(data._id);
+
+        setPassageText("");
+        setSubQuestions([]);
+      }
+    } catch (error) {
+      console.error("Error creating question:", error);
+    }
   };
 
   return (

@@ -2,8 +2,9 @@ import React, { useState, useRef, useEffect } from "react";
 import Input from "../helper/Input";
 import { Save, Pencil, Trash2, GripVertical, Image } from "lucide-react";
 import CategoryContainer from "../helper/CategoryContainer";
+import api from "../../api/api.js";
 
-function Cloze({formAccessKey}) {
+function Cloze({formAccessKey, onFormSubmit}) {
   // State variables
   const [sentence, setSentence] = useState("");
   const [options, setOptions] = useState([]);
@@ -62,22 +63,31 @@ function Cloze({formAccessKey}) {
     }
   };
 
-  const handleSubmit = () => {
-    const formData = new FormData();
-    formData.append("sentence", sentence);
-    formData.append("points", points);
-    formData.append("questionImage", questionImage);
-    formData.append("formAccessKey", formAccessKey);
-    
-    selectedWords.forEach((word, index) => {
-      formData.append(`selectedWords[${index}]`, word);
-    });
+  const handleSubmit = async () => {
+    const content = {
+      sentence: sentence,
+      blanks: options,
+  };
 
-    options.forEach((option, index) => {
-      formData.append(`options[${index}]`, option);
-    });
+    try {
+      const response = await api.post("/question/", {
+        questionTitle,
+        points,
+        formAccessKey,
+        type: "Cloze",
+        content
+      });
 
-    console.log(formData);
+      if (response.data) {
+        console.log("Question created:", response.data);
+        const data = response.data.data
+        onFormSubmit(data._id);
+        setSentence("");
+        setOptions([]);
+      }
+    } catch (error) {
+      console.error("Error creating question:", error);
+    }
   };
 
   const renderSentence = () => {
