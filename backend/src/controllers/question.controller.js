@@ -6,28 +6,18 @@ import {ApiResponse} from "../utils/ApiResponse.js"
 import { uploadOnCloudinary } from '../config/cloudinary.config.js';
 
 export const createQuestion = asyncHandler(async (req, res, next) => {
-  const { formId, type, content, points, formAccessKey } = req.body;
+  const {questionTitle, type, content, points, formAccessKey } = req.body;
   
 
-  if (!formId) {
-    throw new ApiError('Form ID is required.', 400);
-  }
-
-  const form = await Form.findById(formId);
-  if (!form) {
-    throw new ApiError('Form not found. Please provide a valid form ID.', 404);
-  }
+  if (!formAccessKey) {
+    throw new ApiError('formAccessKey is required.', 400);
+  } 
 
   
   if (!type || !['Categorize', 'Cloze', 'Comprehension'].includes(type)) {
     throw new ApiError('Invalid or missing question type.', 400);
   }
 
-  if (!content || typeof content !== 'object') {
-    throw new ApiError('Content must be a valid object.', 400);
-  }
-
-  
   switch (type) {
     case 'Categorize':
       if (!Array.isArray(content.categories) || !Array.isArray(content.items)) {
@@ -35,7 +25,7 @@ export const createQuestion = asyncHandler(async (req, res, next) => {
       }
       break;
     case 'Cloze':
-      if (!content.passage || typeof content.passage !== 'string' || !Array.isArray(content.blanks)) {
+      if (!content.sentence || typeof content.sentence !== 'string' || !Array.isArray(content.blanks)) {
          throw new ApiError('Cloze content must include "passage" as a string and "blanks" as an array.', 400);
       }
       break;
@@ -51,14 +41,15 @@ export const createQuestion = asyncHandler(async (req, res, next) => {
   const imageLocalFilePath = req.file?.path;
   let uploadedImage;
   if(imageLocalFilePath){
-    image = uploadOnCloudinary(imageLocalFilePath);
+    uploadedImage = uploadOnCloudinary(imageLocalFilePath);
   }
   
   const newQuestion = new Question({
+    questionTitle,
     type,
     content,
     points: points || 1, 
-    image: uploadedImage.url,
+    image: uploadedImage ?  uploadedImage.url : null,
     formAccessKey
   });
 
@@ -67,8 +58,8 @@ export const createQuestion = asyncHandler(async (req, res, next) => {
   return res.status(201).json( 
     new ApiResponse(
     201,
-    'Question created successfully.',
     savedQuestion,
+    'Question created successfully.',
   )
 );
 });
