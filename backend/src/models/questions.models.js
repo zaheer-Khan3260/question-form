@@ -2,6 +2,9 @@ import mongoose from 'mongoose';
 
 const QuestionSchema = new mongoose.Schema(
   {
+    questionTitle: {
+      type: String
+    },
     formAccessKey: {
       type: String,
       required: [true, 'Form ID is required'], 
@@ -24,7 +27,7 @@ const QuestionSchema = new mongoose.Schema(
             case 'Categorize':
               return v.categories && Array.isArray(v.categories) && v.items && Array.isArray(v.items);
             case 'Cloze':
-              return v.passage && typeof v.passage === 'string' && v.blanks && Array.isArray(v.blanks);
+              return v.sentence && typeof v.sentence === 'string' && v.blanks && Array.isArray(v.blanks);
             case 'Comprehension':
               return v.passage && typeof v.passage === 'string' && v.questions && Array.isArray(v.questions);
             default:
