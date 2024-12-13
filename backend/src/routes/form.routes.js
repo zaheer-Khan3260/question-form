@@ -13,5 +13,6 @@ router.post('/', createForm);
 router.patch('/:formId', updateForm);
 
 router.delete('/:formId', deleteForm);
+router.get('/:accessKey', getFormByAccessKey);
 
 export default router;

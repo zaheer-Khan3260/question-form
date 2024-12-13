@@ -6,16 +6,17 @@ import { ApiResponse } from '../utils/ApiResponse.js';
 
   
 export const createForm = asyncHandler(async (req, res, next) => {
-    const { title, questions } = req.body;
-  
-    if (!title || !questions || !Array.isArray(questions)) {
+    const { title, questions, accessKey } = req.body;
+    console.log("req: ", req)
+  console.log("req body: ", req.body)
+    if (!title || !questions || !Array.isArray(questions) || !accessKey) {
       return next(new ApiError('Invalid input. Title and questions are required, and questions must be an array.', 400));
     }
   
-    const sanitizedTitle = title.trim();
     const newForm = new Form({
-      title: sanitizedTitle,
+      title,
       questions,
+      accessKey,
       isPublished: true
     });
   
@@ -26,7 +27,7 @@ export const createForm = asyncHandler(async (req, res, next) => {
         status: 'success',
         data: {
           form: savedForm,
-          previewLink: `/preview/${savedForm.accessKey}`, 
+          previewLink: `preview/${savedForm.accessKey}`, 
           accessLink: `${savedForm._id}/${savedForm.accessKey}`
         },
       });
@@ -42,7 +43,7 @@ export const createForm = asyncHandler(async (req, res, next) => {
 export const getFormByAccessKey = asyncHandler(async (req, res, next) => {
     const { accessKey } = req.params;
 
-    const form = await Form.findOne({ accessKey }).select('-__v');
+    const form = await Form.findOne({ accessKey }).select('-__v').populate('questions');
 
     if (!form) {
       throw new ApiError('Form not found', 404);
@@ -56,22 +57,16 @@ export const getFormByAccessKey = asyncHandler(async (req, res, next) => {
 
 
  export const updateForm = asyncHandler(async (req, res) => {
-    const { id } = req.params;
+    const { formId } = req.params;
     const updateData = req.body;
-
-    const form = await Form.findById(id);
+    const form = await Form.findById(formId);
     
     if (!form) {
       throw new ApiError('Form not found', 404);
     }
 
-    // Check if user is the creator
-    if (form.createdBy.toString() !== req.user._id.toString()) {
-     throw new ApiError('Not authorized to update this form', 403);
-    }
-
     const updatedForm = await Form.findByIdAndUpdate(
-      id, 
+      formId, 
       updateData, 
       { new: true, runValidators: true }
     );

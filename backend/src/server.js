@@ -44,10 +44,12 @@ app.use(cookieParser());
 
 import questionRouter from "./routes/question.routes.js";
 import formRouter from "./routes/form.routes.js"
+import answerRouter from "./routes/answer.routes.js"
 
 
 app.use("/api/question", questionRouter);
 app.use("/api/form", formRouter)
+app.use("/api/answer", answerRouter)
 
 
 
