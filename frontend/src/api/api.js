@@ -1,7 +1,7 @@
 import axios from "axios"
 
 const api = axios.create({
-    baseURL: "https://question-form-api.vercel.app/api", 
+    baseURL: process.env.REACT_APP_BACKEND_SERVER_URL, 
     withCredentials: true 
 });
   
