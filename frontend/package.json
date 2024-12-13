@@ -38,5 +38,6 @@
   },
   "devDependencies": {
     "tailwindcss": "^3.4.16"
-  }
+  },
+  "proxy": "https://question-form-api.vercel.app/api"
 }
