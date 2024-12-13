@@ -1,24 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GripVertical } from 'lucide-react';
+import api from '../../api/api.js';
 
-function Cloze() {
-    const [data, setData] = useState({
-        questionTitle: "Fill in the Blanks",
-        sentence: "The quick brown fox jumps over the lazy dog",
-        selectedWords: ["quick", "lazy"],
-        points: 4,
-        questionImage: null
-    });
-
+function Cloze({questionData, setResponse}) {
+    const [data, setData] = useState(null);
     const [draggedWord, setDraggedWord] = useState(null);
-    const [blankSpaces, setBlankSpaces] = useState(
-        data.sentence.split(' ').map((word, index) => {
-            const isBlank = data.selectedWords.includes(word);
+    const [blankSpaces, setBlankSpaces] = useState([]);
+    const [availableWords, setAvailableWords] = useState([]);
+    const [userAnswer, setUserAnswer] = useState([]); // Modified to be an array of strings
+  
+    useEffect(() => {
+      if (questionData?.content) {
+        setData(questionData);
+        const sentence = questionData.content.sentence || '';
+        const selectedWords = questionData.content.blanks || [];
+        const blanks = questionData.content.blanks || [];
+  
+        setBlankSpaces(
+          sentence.split(' ').map((word, index) => {
+            const isBlank = selectedWords.includes(word);
             return isBlank ? { word: null, originalWord: word, index } : null;
-        })
-    );
-
-    const [availableWords, setAvailableWords] = useState([...data.selectedWords]);
+          })
+        );
+        
+        setAvailableWords([...blanks]);
+      }
+    }, [questionData]);
 
     const handleDragStart = (word) => {
         setDraggedWord(word);
@@ -37,6 +44,13 @@ function Cloze() {
                 return blank;
             });
 
+            // Update userAnswer
+            const newUserAnswer = updatedBlankSpaces
+                .filter(blank => blank && blank.word)
+                .map(blank => blank.word);
+
+            setUserAnswer(newUserAnswer);
+
             setBlankSpaces(updatedBlankSpaces);
             setAvailableWords(availableWords.filter(word => word !== draggedWord));
             setDraggedWord(null);
@@ -47,6 +61,14 @@ function Cloze() {
         const updatedBlankSpaces = blankSpaces.map((blank, index) => {
             if (index === blankIndex) {
                 setAvailableWords([...availableWords, blank.word]);
+                
+                // Update userAnswer
+                const newUserAnswer = blankSpaces
+                    .filter((b, idx) => idx !== blankIndex && b && b.word)
+                    .map(b => b.word);
+                
+                setUserAnswer(newUserAnswer);
+                
                 return { ...blank, word: null };
             }
             return blank;
@@ -54,8 +76,31 @@ function Cloze() {
         setBlankSpaces(updatedBlankSpaces);
     };
 
+    const submitAnswer = async () => {
+            try {
+                const response = await api.post("/answer/", {
+                    formAccessKey: questionData.formAccessKey,
+                    questionId: questionData?._id,
+                    type: "Cloze",
+                    content: {
+                        answers: userAnswer 
+                    }
+                });
+
+                if (response && response.data) {
+                    console.log(response)
+                    const responseData = response.data.message;
+                    setResponse(responseData._id);
+                }
+            } catch (error) {
+                console.log("Error while saving the answer: ", error);
+            }
+        
+    };
+
     const renderSentenceWithBlanks = () => {
-        const words = data.sentence.split(' ');
+        const sentence = data?.content?.sentence || '';
+        const words = sentence.split(' ');
         return words.map((word, index) => {
             const blank = blankSpaces[index];
             if (blank) {
@@ -106,8 +151,8 @@ function Cloze() {
             {/* Question Header */}
             <div className="w-full flex space-x-1 mb-4 relative pr-10 ">
                 <GripVertical className="mt-1" />
-                <div className='text-xl'>Question 1 : </div>
-                <div className='text-xl ml-8'>{data.questionTitle}</div>
+                <div className='text-xl'>Question 2 : </div>
+                <div className='text-xl ml-8'>{data?.questionTitle}</div>
             </div>
 
             {/* Options Section */}
@@ -136,6 +181,14 @@ function Cloze() {
                     </div>
                 </div>
             </div>
+
+            {/* Submit Button */}
+            <button 
+                onClick={submitAnswer} 
+                className='mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
+            >
+                Submit Answer
+            </button>
         </div>
     );
 }

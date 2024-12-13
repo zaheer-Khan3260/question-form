@@ -139,11 +139,8 @@ function Categorize({ formAccessKey, onFormSubmit }) {
       });
 
       if (response.data) {
-        console.log("Question created:", response.data);
         const data = response.data.data
         onFormSubmit(data._id);
-        setCategory([]);
-        setItem([]);
       }
     } catch (error) {
       console.error("Error creating question:", error);

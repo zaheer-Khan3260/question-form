@@ -12,12 +12,13 @@ function Comprehension({formAccessKey, onFormSubmit}) {
   const [passageText, setPassageText] = useState("");
   const [subQuestions, setSubQuestions] = useState([
     { 
+      id: 1, // Assigning a unique id to each sub-question
       question: "", 
       options: [
-        { id: 1, text: "" },
-        { id: 2, text: "" },
-        { id: 3, text: "" },
-        { id: 4, text: "" }
+        { id: 1, text: "", questionId: 1 }, // Storing the id of the question instead of option id
+        { id: 2, text: "", questionId: 1 },
+        { id: 3, text: "", questionId: 1 },
+        { id: 4, text: "", questionId: 1 }
       ],
       correctAnswer: null 
     }
@@ -53,12 +54,13 @@ function Comprehension({formAccessKey, onFormSubmit}) {
     setSubQuestions([
       ...subQuestions, 
       { 
+        id: subQuestions.length + 1, // Assigning a unique id to the new sub-question
         question: "", 
         options: [
-          { id: 1, text: "" },
-          { id: 2, text: "" },
-          { id: 3, text: "" },
-          { id: 4, text: "" }
+          { id: 1, text: "", questionId: subQuestions.length + 1 }, // Storing the id of the new question
+          { id: 2, text: "", questionId: subQuestions.length + 1 },
+          { id: 3, text: "", questionId: subQuestions.length + 1 },
+          { id: 4, text: "", questionId: subQuestions.length + 1 }
         ],
         correctAnswer: null 
       }
@@ -136,12 +138,9 @@ function Comprehension({formAccessKey, onFormSubmit}) {
       });
 
       if (response.data) {
-        console.log("Question created:", response.data);
         const data = response.data.data
         onFormSubmit(data._id);
 
-        setPassageText("");
-        setSubQuestions([]);
       }
     } catch (error) {
       console.error("Error creating question:", error);
@@ -220,7 +219,7 @@ function Comprehension({formAccessKey, onFormSubmit}) {
       {/* Sub Questions */}
       {subQuestions.map((subQuestion, subQuestionIndex) => (
         <div 
-          key={subQuestionIndex} 
+          key={subQuestion.id} // Using the unique id for each sub-question
           className="w-[calc(100%-8rem)] mb-4 p-4 border rounded-md relative"
         >
           {/* Sub Question Header */}

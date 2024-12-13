@@ -79,11 +79,9 @@ function Cloze({formAccessKey, onFormSubmit}) {
       });
 
       if (response.data) {
-        console.log("Question created:", response.data);
         const data = response.data.data
         onFormSubmit(data._id);
-        setSentence("");
-        setOptions([]);
+       
       }
     } catch (error) {
       console.error("Error creating question:", error);

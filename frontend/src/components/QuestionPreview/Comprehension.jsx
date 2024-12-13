@@ -1,39 +1,42 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { GripVertical } from 'lucide-react';
+import api from '../../api/api.js';
 
-function Comprehension() {
-    const [data, setData] = useState({
-        questionTitle: "Answer the following questions based on the passage:",
-        passage: "The quick brown fox jumps over the lazy dog. Foxes are small to medium-sized, omnivorous mammals belonging to several genera of the family Canidae.",
-        questions: [
-            { 
-                id: 1, 
-                text: "What color is the fox?", 
-                options: ["Red", "Brown", "Black", "Gray"], 
-                answer: "" 
-            },
-            { 
-                id: 2, 
-                text: "What does the fox jump over?", 
-                options: ["The cat", "The dog", "The log", "The hill"], 
-                answer: "" 
-            },
-            { 
-                id: 3, 
-                text: "What family do foxes belong to?", 
-                options: ["Felidae", "Canidae", "Hominidae", "Ursidae"], 
-                answer: "" 
+function Comprehension({ questionData, setResponse }) {
+    const [data, setData] = useState();
+    const [userAnswers, setUserAnswers] = useState({});
+
+    useEffect(() => {
+        if(questionData?.content){
+            setData(questionData)
+        }
+    }, [questionData])
+
+    const handleAnswerChange = (id, value) => {
+        setUserAnswers(prevState => ({
+            ...prevState,
+            [id]: {questionId: id, selectedOption: value}
+        }));
+    };
+    const submitAnswers = async() => {
+            try {
+                const response = await api.post("/answer/", {
+                    formAccessKey: questionData?.formAccessKey,
+                    questionId: questionData?._id,
+                    type: "Comprehension",
+                    content: {
+                        answers: userAnswers
+                    }
+                })
+        
+                if(response && response.data){
+
+                    const data = response.data.message;
+                    setResponse(data._id);
+                }
+            } catch (error) {
+             console.log("error while saving the answer: ", error);   
             }
-        ],
-        points: 5,
-        questionImage: null
-    });
-
-    const handleAnswerChange = (questionId, value) => {
-        const updatedQuestions = data.questions.map((question) =>
-            question.id === questionId ? { ...question, answer: value } : question
-        );
-        setData((prevData) => ({ ...prevData, questions: updatedQuestions }));
     };
 
     return (
@@ -59,38 +62,46 @@ function Comprehension() {
             {/* Question Header */}
             <div className="w-full flex space-x-1 mb-4 relative pr-10 ">
                 <GripVertical className="mt-1" />
-                <div className='text-xl'>Question 1 : </div>
-                <div className='text-xl ml-8'>{data.questionTitle}</div>
+                <div className='text-xl'>Question 3 : </div>
             </div>
 
             {/* Passage Section */}
             <div className='w-full bg-gray-100 p-4 rounded-md my-4 text-black'>
-                {data.passage}
+                {data?.content?.passage}
             </div>
 
             {/* Questions Section */}
             <div className='w-full space-y-4 mt-4'>
-                {data.questions.map((question) => (
-                    <div key={question.id} className='w-full flex flex-col space-y-2'>
-                        <div className='text-lg font-semibold'>{question.text}</div>
+                {data?.content?.questions.map((question, index) => (
+                    <div key={index} className='w-full flex flex-col space-y-2'>
+
+                        <div className='text-lg font-semibold'>{`3.${index + 1}`} {question.question}</div>
                         <div className='flex flex-col space-y-1'>
-                            {question.options.map((option, index) => (
-                                <label key={index} className='flex items-center space-x-2'>
+                            {question.options.map((option, optionIndex) => (
+                                <label key={optionIndex} className='flex items-center space-x-2 '>
                                     <input
                                         type='radio'
-                                        name={`question-${question.id}`}
-                                        value={option}
-                                        checked={question.answer === option}
-                                        onChange={(e) => handleAnswerChange(question.id, e.target.value)}
+                                        name={`question-${index}`}
+                                        value={option.text}
+                                        checked={userAnswers[question.id]?.selectedOption === option.text}
+                                        onChange={() => handleAnswerChange(question.id, option.text)}
                                         className='form-radio text-blue-500 '
                                     />
-                                    <span>{option}</span>
+                                    <span>{option.text}</span>
                                 </label>
                             ))}
                         </div>
                     </div>
                 ))}
             </div>
+
+            {/* Submit Button */}
+            <button 
+                onClick={submitAnswers} 
+                className='mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
+            >
+                Submit Answers
+            </button>
         </div>
     );
 }
