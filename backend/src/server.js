@@ -13,10 +13,10 @@ console.log("Cors origin env", process.env.CORS_ORIGIN);
 const app = new express();
 
 const corsOptions = {
-    origin: [process.env.CORS_ORIGIN, "https://rainbow-vacherin-596f62.netlify.app/"],
+    origin: [process.env.CORS_ORIGIN, "https://rainbow-vacherin-596f62.netlify.app/", ],
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
     credentials: true,
-    allowedHeaders: "Content-Type, Authorization, X-Requested-With",
+    allowedHeaders: "Content-Type, Authorization, X-Requested-With, Access-Control-Allow-Origin",
     preflightContinue: false,
     optionsSuccessStatus: 204
 };
