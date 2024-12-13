@@ -11,6 +11,7 @@ function FormEditor() {
     const [questionIds, setQuestionIds] = useState([]); // Added state to store question IDs
     const [previewLink, setPreviewLink] = useState();
     const [accessLink, setAccessLink] = useState();
+    const [error, setError] = useState(null); // Added state to store error message
 
     
     React.useEffect(() => {
@@ -37,6 +38,10 @@ function FormEditor() {
 
     const handleFormSubmit = async() => {
      try {
+       if (!formTitle || !accessKey || questionIds.length < 3) {
+         setError("All fields are required");
+         return;
+       }
        const response = await api.post("/form/", {
          title: formTitle,
          accessKey,
@@ -97,6 +102,7 @@ function FormEditor() {
               </div>
             )
           }
+          {error && <div className='text-red-500'>{error}</div>} {/* Display error message if exists */}
           <button className={`px-8 py-2 rounded-md bg-blue-500 hover:bg-blue-600 text-white ${previewLink ? "hidden" : "block"} `} onClick={handleFormSubmit} >
             Save
           </button>
