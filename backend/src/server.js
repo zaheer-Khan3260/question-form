@@ -32,7 +32,7 @@ connectDatabase()
         console.log(`Server is running at port : ${process.env.PORT}`);
     })
     app.get("/", (req,res) => {
-        res.status(200).json("You are good to go")
+        res.status(200).json({ message: "You are good to go" })
     })
 })
 .catch((err) => {
