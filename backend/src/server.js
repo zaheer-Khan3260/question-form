@@ -50,9 +50,9 @@ import formRouter from "./routes/form.routes.js"
 import answerRouter from "./routes/answer.routes.js"
 
 
-app.use("/api/question", questionRouter);
-app.use("/api/form", formRouter)
-app.use("/api/answer", answerRouter)
+app.use("/question", questionRouter);
+app.use("/form", formRouter)
+app.use("/answer", answerRouter)
 
 
 
